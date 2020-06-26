@@ -66,14 +66,12 @@ def main():
 
     voices = ss.getProperty('voices')
     for voice in voices:
-        print(voice)
         if ''.join(voice.languages).lower() == language.lower():
             ss.setProperty('voice', voice.id)
             break
         elif language.lower() in voice.id.lower():
             voiceID = voice.id
             break
-
     recordChoice = input("\nDo you have a file you would like translated? ").lower()
     rawFile = userInput(recordChoice)
     audio = readFile(rawFile, r)
