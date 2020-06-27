@@ -57,7 +57,8 @@ def processAudio(audio, r, ss, lang):
         ss.say(processed)
         ss.runAndWait()
     except sr.UnknownValueError:
-        print("Sorry, audio was unable to be processed. Check for excessive background noise.")
+        print("Sorry, audio was unable to be processed. Verify language \
+        selections and check for excessive background noise.")
 
 def getLang(prompt):
     lang = None
