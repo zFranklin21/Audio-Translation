@@ -24,11 +24,13 @@ def userInput(recordChoice):
         rawFile = sr.AudioFile(fileName)
     else:
         import recorder
-        print("\nPrepare to record a 10 second audio clip.")
+        duration = input("How many seconds will you take to record your audio clip? ")
+        recorder.RECORD_SECONDS = int(duration)
+        print("\nPrepare to record a " + duration + " second audio clip.")
         time.sleep(2)
-        print("Starting in...")
+        print("\nStarting in...")
         for i in range(5, 0, -1):
-            print(i)
+            print("\t" + str(i))
             time.sleep(1)
         recorder.record()
         rawFile = sr.AudioFile(recorder.WAVE_OUTPUT_FILENAME)
@@ -45,7 +47,8 @@ def readFile(rawFile, r):
 def processAudio(audio, r, ss, lang):
     try:
         print("\nProcessing audio...")
-        processed = r.recognize_google(audio, language = lang)
+        processed = r.recognize_google(audio, language = lang[0])
+        # profanity is automatically filtered
         # r.recognize_google(audio, language="fr-FR")
         # https://cloud.google.com/speech-to-text/docs/languages
         print("Audio processed.")
@@ -56,22 +59,51 @@ def processAudio(audio, r, ss, lang):
     except sr.UnknownValueError:
         print("Sorry, audio was unable to be processed. Check for excessive background noise.")
 
+def getLang(prompt):
+    lang = None
+    print("This program supports the following languages:\
+    \n\t1. English\
+    \n\t2. Spanish\
+    \n\t3. German\
+    \n\t4. French\
+    \n\t5. Mandarin Chinese\
+    \n\t6. Japanese\
+    \n\t7. Russian")
+
+    while lang == None:
+        choice = input(prompt).lower()
+        if choice == "english" or choice == "1":
+            lang = ["en-US", "en_US"]
+        elif choice == "spanish" or choice == "2":
+            lang = ["es-ES", "es_ES"]
+        elif choice == "german" or choice == "3":
+            lang = ["de-DE", "de_DE"]
+        elif choice == "french" or choice == "4":
+            lang = ["fr-FR", "fr_FR"]
+        elif choice == "mandarin chinese" or choice == "5":
+            lang = ["zh-CN", "zh_CN"]
+        elif choice == "japanese" or choice == "6":
+            lang = ["ja-JP", "ja_JP"]
+        elif choice == "russian" or choice == "7":
+            lang = ["ru-RU", "ru_RU"]
+    return lang
+
 def main():
     # Instantiation of modules
-    language = "en_US"
-    voiceID = None
+    language = getLang("What is the target language? ")
     r = sr.Recognizer()
     tl = Translator()
     ss = pyttsx3.init()
 
     voices = ss.getProperty('voices')
     for voice in voices:
-        if ''.join(voice.languages).lower() == language.lower():
+        if any(i.lower() in ''.join(voice.languages).lower() for i in language):
             ss.setProperty('voice', voice.id)
             break
-        elif language.lower() in voice.id.lower():
-            voiceID = voice.id
+        elif any(i.lower() in voice.id.lower() for i in language):
+            ss.setProperty('voice', voice.id)
             break
+
     recordChoice = input("\nDo you have a file you would like translated? ").lower()
     rawFile = userInput(recordChoice)
     audio = readFile(rawFile, r)
