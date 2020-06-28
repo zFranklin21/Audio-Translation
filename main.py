@@ -54,8 +54,9 @@ def processAudio(audio, r, ss, lang):
         print("Audio processed.")
         print("\nTranscription of audio:\n")
         print(processed)
-        ss.say(processed)
-        ss.runAndWait()
+        # ss.say(processed)
+        # ss.runAndWait()
+        return processed
     except sr.UnknownValueError:
         print("Sorry, audio was unable to be processed. Verify language \
         selections and check for excessive background noise.")
@@ -74,43 +75,52 @@ def getLang(prompt):
     while lang == None:
         choice = input(prompt).lower()
         if choice == "english" or choice == "1":
-            lang = ["en-US", "en_US"]
+            lang = ["en-US", "en_US", "en"]
         elif choice == "spanish" or choice == "2":
-            lang = ["es-ES", "es_ES"]
+            lang = ["es-ES", "es_ES", "es"]
         elif choice == "german" or choice == "3":
-            lang = ["de-DE", "de_DE"]
+            lang = ["de-DE", "de_DE", "de"]
         elif choice == "french" or choice == "4":
-            lang = ["fr-FR", "fr_FR"]
+            lang = ["fr-FR", "fr_FR", "fr"]
         elif choice == "mandarin chinese" or choice == "5":
-            lang = ["zh-CN", "zh_CN"]
+            lang = ["zh-CN", "zh_CN", "zh-cn"]
         elif choice == "japanese" or choice == "6":
-            lang = ["ja-JP", "ja_JP"]
+            lang = ["ja-JP", "ja_JP", "ja"]
         elif choice == "russian" or choice == "7":
-            lang = ["ru-RU", "ru_RU"]
+            lang = ["ru-RU", "ru_RU", "ru"]
     return lang
+
+def translateText(originalTranscript, origin, target, tl):
+    print("\nTranslating audio transcription to target language...")
+    translation = tl.translate(originalTranscript, dest = target[2], src = origin[2]).text
+    print("Translation complete!")
+    print("\nTranslation:\n")
+    print(translation)
 
 def main():
     # Instantiation of modules
-    language = getLang("What is the target language? ")
+    origin = getLang("What is the original language? ")
+    target = getLang("What is the target language? ")
     r = sr.Recognizer()
     tl = Translator()
     ss = pyttsx3.init()
 
     voices = ss.getProperty('voices')
     for voice in voices:
-        if any(i.lower() in ''.join(voice.languages).lower() for i in language):
+        if any(i.lower() in ''.join(voice.languages).lower() for i in target):
             ss.setProperty('voice', voice.id)
             break
-        elif any(i.lower() in voice.id.lower() for i in language):
+        elif any(i.lower() in voice.id.lower() for i in target):
             ss.setProperty('voice', voice.id)
             break
 
     recordChoice = input("\nDo you have a file you would like translated? ").lower()
     rawFile = userInput(recordChoice)
     audio = readFile(rawFile, r)
-    processAudio(audio, r, ss, language)
+    originalTranscript = processAudio(audio, r, ss, origin)
+    translateText(originalTranscript, origin, target, tl)
 
-    print("\nTerminating program.")
+    print("\nTerminating program.\n")
     sys.exit()
 
 main()

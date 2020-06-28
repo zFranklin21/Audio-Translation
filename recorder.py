@@ -28,7 +28,7 @@ def record():
     stream.close()
     audio.terminate()
     # Output
-    print("Saving audio file...")
+    print("\nSaving audio file...")
     waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
     waveFile.setnchannels(CHANNELS)
     waveFile.setsampwidth(audio.get_sample_size(FORMAT))
