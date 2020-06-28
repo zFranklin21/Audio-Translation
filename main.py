@@ -15,14 +15,15 @@ try:
 except ImportError:
     print("Error: PyAudio and SpeechRecognition packages are needed.\
     \nPlease run $ pip install pyaudio speechrecognition googletrans pyttsx3");
-    sys.exit();
+    terminate()
 
-def userInput(recordChoice):
+def userInput():
     global rawFile
+    recordChoice = input("\nDo you have a .wav file you would like translated? ").lower()
     if recordChoice == "y" or recordChoice == "yes":
         fileName = input("What is the name of the file you would like translated? ")
         rawFile = sr.AudioFile(fileName)
-    else:
+    elif recordChoice == "n" or recordChoice == "no":
         import recorder
         duration = input("How many seconds will you take to record your audio clip? ")
         recorder.RECORD_SECONDS = int(duration)
@@ -34,15 +35,20 @@ def userInput(recordChoice):
             time.sleep(1)
         recorder.record()
         rawFile = sr.AudioFile(recorder.WAVE_OUTPUT_FILENAME)
+    else:
+        rawFile = userInput()
     return rawFile
 
 def readFile(rawFile, r):
     print("\nReading audio file...")
-    with rawFile as source:
-        audio = r.record(rawFile)
-    print("Audio file read.")
-    return audio
-
+    try:
+        with rawFile as source:
+            audio = r.record(rawFile)
+        print("Audio file read.")
+        return audio
+    except FileNotFoundError:
+        print("File could not be found.")
+        terminate()
 
 def processAudio(audio, r, ss, lang):
     try:
@@ -61,8 +67,8 @@ def processAudio(audio, r, ss, lang):
         print("Sorry, audio was unable to be processed. Verify language \
         selections and check for excessive background noise.")
 
-def getLang(prompt):
-    lang = None
+def intro():
+    print("\nVideo Language Flipper (VLF) is a program used to translate various languges.")
     print("This program supports the following languages:\
     \n\t1. English\
     \n\t2. Spanish\
@@ -72,6 +78,8 @@ def getLang(prompt):
     \n\t6. Japanese\
     \n\t7. Russian")
 
+def getLang(prompt):
+    lang = None
     while lang == None:
         choice = input(prompt).lower()
         if choice == "english" or choice == "1":
@@ -97,8 +105,13 @@ def translateText(originalTranscript, origin, target, tl):
     print("\nTranslation:\n")
     print(translation)
 
+def terminate():
+    print("\nTerminating program.\n")
+    sys.exit()
+
 def main():
     # Instantiation of modules
+    intro()
     origin = getLang("What is the original language? ")
     target = getLang("What is the target language? ")
     r = sr.Recognizer()
@@ -114,13 +127,9 @@ def main():
             ss.setProperty('voice', voice.id)
             break
 
-    recordChoice = input("\nDo you have a file you would like translated? ").lower()
-    rawFile = userInput(recordChoice)
+    rawFile = userInput()
     audio = readFile(rawFile, r)
     originalTranscript = processAudio(audio, r, ss, origin)
     translateText(originalTranscript, origin, target, tl)
-
-    print("\nTerminating program.\n")
-    sys.exit()
 
 main()
