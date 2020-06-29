@@ -25,13 +25,15 @@ def userInput():
         rawFile = sr.AudioFile(fileName)
     elif recordChoice == "n" or recordChoice == "no":
         import recorder
+        # Clean int input
         duration = input("How many seconds will you take to record your audio clip? ")
         recorder.RECORD_SECONDS = int(duration)
         print("\nPrepare to record a " + duration + " second audio clip.")
         time.sleep(2)
-        print("\nStarting in...")
-        for i in range(5, 0, -1):
-            print("\t" + str(i))
+        print("\nStarting in ... 5")
+        time.sleep(1)
+        for i in range(4, 0, -1):
+            print("\t\t" + str(i))
             time.sleep(1)
         recorder.record()
         rawFile = sr.AudioFile(recorder.WAVE_OUTPUT_FILENAME)
@@ -40,7 +42,7 @@ def userInput():
     return rawFile
 
 def readFile(rawFile, r):
-    print("\nReading audio file...")
+    print("\nReading audio file ...")
     try:
         with rawFile as source:
             audio = r.record(rawFile)
@@ -52,7 +54,7 @@ def readFile(rawFile, r):
 
 def processAudio(audio, r, ss, lang):
     try:
-        print("\nProcessing audio...")
+        print("\nProcessing audio ...")
         processed = r.recognize_google(audio, language = lang[0])
         # profanity is automatically filtered
         # r.recognize_google(audio, language="fr-FR")
@@ -60,8 +62,6 @@ def processAudio(audio, r, ss, lang):
         print("Audio processed.")
         print("\nTranscription of audio:\n")
         print(processed)
-        # ss.say(processed)
-        # ss.runAndWait()
         return processed
     except sr.UnknownValueError:
         print("Sorry, audio was unable to be processed. Verify language \
@@ -69,14 +69,14 @@ def processAudio(audio, r, ss, lang):
 
 def intro():
     print("\nVideo Language Flipper (VLF) is a program used to translate various languges.")
-    print("This program supports the following languages:\
+    print("\nThis program supports the following languages:\
     \n\t1. English\
     \n\t2. Spanish\
     \n\t3. German\
     \n\t4. French\
     \n\t5. Mandarin Chinese\
     \n\t6. Japanese\
-    \n\t7. Russian")
+    \n\t7. Russian\n")
 
 def getLang(prompt):
     lang = None
@@ -99,11 +99,21 @@ def getLang(prompt):
     return lang
 
 def translateText(originalTranscript, origin, target, tl):
-    print("\nTranslating audio transcription to target language...")
+    print("\nTranslating audio transcription to target language ...")
     translation = tl.translate(originalTranscript, dest = target[2], src = origin[2]).text
     print("Translation complete!")
     print("\nTranslation:\n")
     print(translation)
+
+    return translation
+
+def speakTranslation(translation, ss):
+    ss.say(translation)
+    ss.save_to_file(translation, "output.wav")
+
+    print("Reading translation and saving to output.wav ...")
+    ss.runAndWait()
+    print("File saved.")
 
 def terminate():
     print("\nTerminating program.\n")
@@ -130,6 +140,7 @@ def main():
     rawFile = userInput()
     audio = readFile(rawFile, r)
     originalTranscript = processAudio(audio, r, ss, origin)
-    translateText(originalTranscript, origin, target, tl)
+    translation = translateText(originalTranscript, origin, target, tl)
+    speakTranslation(translation, ss)
 
 main()
