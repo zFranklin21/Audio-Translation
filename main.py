@@ -12,17 +12,27 @@ try:
     import speech_recognition as sr
     import pyttsx3
     from googletrans import Translator
+    import moviepy.editor as mp
 except ImportError:
     print("Error: PyAudio and SpeechRecognition packages are needed.\
-    \nPlease run $ pip install pyaudio speechrecognition googletrans pyttsx3");
+    \nPlease run $ pip install pyaudio speechrecognition googletrans pyttsx3 moviepy");
     terminate()
 
 def userInput():
     global rawFile
-    recordChoice = input("\nDo you have a .wav file you would like translated? ").lower()
+    recordChoice = input("\nDo you have a file you would like translated? ").lower()
     if recordChoice == "y" or recordChoice == "yes":
         fileName = input("What is the name of the file you would like translated? ")
-        rawFile = sr.AudioFile(fileName)
+        type = input("What format is the file in? (wav or mp4) ").lower()
+        if type == "wav" or type == ".wav":
+            rawFile = sr.AudioFile(fileName)
+        elif type == "mp4" or type == ".mp4":
+            clip = mp.VideoFileClip(fileName)
+            clip.audio.write_audiofile("audio.wav")
+            rawFile = sr.AudioFile("audio.wav")
+        else:
+            print("Apologies, the program only supports .wav and .mp4\n")
+            terminate()
     elif recordChoice == "n" or recordChoice == "no":
         import recorder
         # Clean int input
