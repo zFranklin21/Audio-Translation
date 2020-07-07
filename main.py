@@ -13,9 +13,14 @@ try:
     import pyttsx3
     from googletrans import Translator
     import moviepy.editor as mp
+    from punctuator import Punctuator
 except ImportError:
-    print("Error: PyAudio and SpeechRecognition packages are needed.\
-    \nPlease run $ pip install pyaudio speechrecognition googletrans pyttsx3 moviepy");
+    print("Error: PyAudio, SpeechRecognition, GoogleTrans, pyttsx3, and MoviePy packages are needed.\
+    \nPlease run $ pip install pyaudio speechrecognition googletrans pyttsx3 moviepy punctuator\
+    \nIn addition, please install a punctuator training model such as:\
+    \n\t $ mkdir -p ~/.punctuator\
+    \n\t $ cd ~/.punctuator\
+    \n\t $ gdown https://drive.google.com/uc?id=0B7BsN5f2F1fZd1Q0aXlrUDhDbnM");
     terminate()
 
 def userInput():
@@ -62,13 +67,14 @@ def readFile(rawFile, r):
         print("File could not be found.")
         terminate()
 
-def processAudio(audio, r, ss, lang):
+def processAudio(audio, r, ss, p, lang):
     try:
         print("\nProcessing audio ...")
         processed = r.recognize_google(audio, language = lang[0])
         # profanity is automatically filtered
         # r.recognize_google(audio, language="fr-FR")
         # https://cloud.google.com/speech-to-text/docs/languages
+        processed = p.punctuate(processed)
         print("Audio processed.")
         print("\nTranscription of audio:\n")
         print(processed)
@@ -121,9 +127,9 @@ def speakTranslation(translation, ss):
     ss.say(translation)
     ss.save_to_file(translation, "output.wav")
 
-    print("Reading translation and saving to output.wav ...")
+    print("\nReading translation and saving to output.wav ...")
     ss.runAndWait()
-    print("File saved.")
+    print("File saved.\n")
 
 def terminate():
     print("\nTerminating program.\n")
@@ -137,7 +143,9 @@ def main():
     r = sr.Recognizer()
     tl = Translator()
     ss = pyttsx3.init()
+    p = Punctuator('Demo-Europarl-EN.pcl')
 
+    ss.setProperty('rate', 140)
     voices = ss.getProperty('voices')
     for voice in voices:
         if any(i.lower() in ''.join(voice.languages).lower() for i in target):
@@ -149,7 +157,7 @@ def main():
 
     rawFile = userInput()
     audio = readFile(rawFile, r)
-    originalTranscript = processAudio(audio, r, ss, origin)
+    originalTranscript = processAudio(audio, r, ss, p, origin)
     translation = translateText(originalTranscript, origin, target, tl)
     speakTranslation(translation, ss)
 
