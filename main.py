@@ -74,7 +74,8 @@ def processAudio(audio, r, ss, p, lang):
         # profanity is automatically filtered
         # r.recognize_google(audio, language="fr-FR")
         # https://cloud.google.com/speech-to-text/docs/languages
-        processed = p.punctuate(processed)
+        if lang[0] == "en-US":
+            processed = p.punctuate(processed)
         print("Audio processed.")
         print("\nTranscription of audio:\n")
         print(processed)
@@ -143,7 +144,18 @@ def main():
     r = sr.Recognizer()
     tl = Translator()
     ss = pyttsx3.init()
-    p = Punctuator('Demo-Europarl-EN.pcl')
+    p = None
+    if origin[0] == "en-US":
+        try:
+            p = Punctuator('Demo-Europarl-EN.pcl')
+        except ImportError:
+            print("Error: Punctuator package is needed.\
+            \nPlease run $ pip install punctuator\
+            \nIn addition, please install a training model such as:\
+            \n\t $ mkdir -p ~/.punctuator\
+            \n\t $ cd ~/.punctuator\
+            \n\t $ gdown https://drive.google.com/uc?id=0B7BsN5f2F1fZd1Q0aXlrUDhDbnM");
+            terminate()
 
     ss.setProperty('rate', 140)
     voices = ss.getProperty('voices')
