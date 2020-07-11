@@ -14,10 +14,11 @@ try:
     from googletrans import Translator
     import moviepy.editor as mp
     from punctuator import Punctuator
+    p = Punctuator('Demo-Europarl-EN.pcl')
 except ImportError:
-    print("Error: PyAudio, SpeechRecognition, GoogleTrans, pyttsx3, and MoviePy packages are needed.\
+    print("Error: PyAudio, SpeechRecognition, GoogleTrans, pyttsx3, MoviePy, and Punctuator packages are needed.\
     \nPlease run $ pip install pyaudio speechrecognition googletrans pyttsx3 moviepy punctuator\
-    \nIn addition, please install a punctuator training model such as:\
+    \nIn addition, please install a punctuator training model such as Demo-Europarl-EN.pcl:\
     \n\t $ mkdir -p ~/.punctuator\
     \n\t $ cd ~/.punctuator\
     \n\t $ gdown https://drive.google.com/uc?id=0B7BsN5f2F1fZd1Q0aXlrUDhDbnM");
@@ -67,15 +68,13 @@ def readFile(rawFile, r):
         print("File could not be found.")
         terminate()
 
-def processAudio(audio, r, ss, p, lang):
+def processAudio(audio, r, lang):
     try:
         print("\nProcessing audio ...")
         processed = r.recognize_google(audio, language = lang[0])
         # profanity is automatically filtered
         # r.recognize_google(audio, language="fr-FR")
         # https://cloud.google.com/speech-to-text/docs/languages
-        if lang[0] == "en-US":
-            processed = p.punctuate(processed)
         print("Audio processed.")
         print("\nTranscription of audio:\n")
         print(processed)
@@ -115,12 +114,16 @@ def getLang(prompt):
             lang = ["ru-RU", "ru_RU", "ru"]
     return lang
 
-def translateText(originalTranscript, origin, target, tl):
-    print("\nTranslating audio transcription to target language ...")
-    translation = tl.translate(originalTranscript, dest = target[2], src = origin[2]).text
-    print("Translation complete!")
-    print("\nTranslation:\n")
-    print(translation)
+def translateText(originalTranscript, origin, target, tl, show):
+    if show:
+        print("\nTranslating audio transcription to target language ...")
+        translation = tl.translate(originalTranscript, dest = target[2], src = origin[2]).text
+        print("Translation complete!")
+
+        print("\nTranslation:\n")
+        print(translation)
+    else:
+        translation = tl.translate(originalTranscript, dest = target[2], src = origin[2]).text
 
     return translation
 
@@ -141,23 +144,12 @@ def main():
     intro()
     origin = getLang("What is the original language? ")
     target = getLang("What is the target language? ")
+    english = ["en-US", "en_US", "en"]
     r = sr.Recognizer()
     tl = Translator()
     ss = pyttsx3.init()
-    p = None
-    if origin[0] == "en-US":
-        try:
-            p = Punctuator('Demo-Europarl-EN.pcl')
-        except ImportError:
-            print("Error: Punctuator package is needed.\
-            \nPlease run $ pip install punctuator\
-            \nIn addition, please install a training model such as:\
-            \n\t $ mkdir -p ~/.punctuator\
-            \n\t $ cd ~/.punctuator\
-            \n\t $ gdown https://drive.google.com/uc?id=0B7BsN5f2F1fZd1Q0aXlrUDhDbnM");
-            terminate()
 
-    ss.setProperty('rate', 140)
+    ss.setProperty('rate', 150)
     voices = ss.getProperty('voices')
     for voice in voices:
         if any(i.lower() in ''.join(voice.languages).lower() for i in target):
@@ -169,8 +161,14 @@ def main():
 
     rawFile = userInput()
     audio = readFile(rawFile, r)
-    originalTranscript = processAudio(audio, r, ss, p, origin)
-    translation = translateText(originalTranscript, origin, target, tl)
+    if origin != english:
+        originalTranscript = processAudio(audio, r, origin)
+        englishTranscript = translateText(originalTranscript, origin, english, tl, False)
+    else:
+        englishTranscript = processAudio(audio, r, origin)
+    final = p.punctuate(englishTranscript)
+    translation = translateText(final, english, target, tl, True)
+
     speakTranslation(translation, ss)
 
 main()
